@@ -1,4 +1,3 @@
-// Root module only for the Vercel function in api/; the backend lives in its own module.
 module infection-risk-calculator
 
 go 1.23
