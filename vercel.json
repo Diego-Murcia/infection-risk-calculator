@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "cd infection-risk-calculator-web && npx -y npm@11 ci",
+  "buildCommand": "cd infection-risk-calculator-web && npm run build",
+  "outputDirectory": "infection-risk-calculator-web/dist"
+}
