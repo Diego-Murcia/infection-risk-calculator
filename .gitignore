@@ -1,0 +1,36 @@
+# Dependencies and build output
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Go build output
+/infection-risk-calculator-be/server
+*.exe
+*.test
+*.out
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Deploy
+.vercel/
+
+# Local AI tooling (Claude Code config, graphify knowledge graph)
+CLAUDE.md
+.claude/
+graphify-out/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
