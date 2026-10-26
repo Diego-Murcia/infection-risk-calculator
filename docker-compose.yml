@@ -1,0 +1,9 @@
+services:
+  be:
+    build: ./infection-risk-calculator-be
+  web:
+    build: ./infection-risk-calculator-web
+    ports:
+      - "8000:80"
+    depends_on:
+      - be
