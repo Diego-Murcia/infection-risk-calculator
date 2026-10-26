@@ -16,6 +16,7 @@ type Input struct {
 	TipoFractura        string   `json:"tipoFractura"`
 	Gustilo             string   `json:"gustilo"`
 	Fernandez           string   `json:"fernandez"`
+	Schatzker           string   `json:"schatzker"`
 	MinutosHastaIngreso int      `json:"minutosHastaIngreso"`
 	AntibioticoPrevio   bool     `json:"antibioticoPrevio"`
 	ManejoQuirurgico    string   `json:"manejoQuirurgico"`
@@ -40,19 +41,20 @@ var comorbilidadPuntos = map[string]int{
 }
 var gustiloPuntos = map[string]int{"I": 1, "II": 2, "IIIA": 3, "IIIB": 4, "IIIC": 5}
 var fernandezPuntos = map[string]int{"I": 0, "II": 1, "III": 1, "IV": 1, "V": 2}
+var schatzkerPuntos = map[string]int{"I": 1, "II": 1, "III": 1, "IV": 2, "V": 3, "VI": 3}
 var quirurgicoPuntos = map[string]int{"tutor_externo": 2, "osteosintesis_definitiva": 1}
 var localizaciones = []string{"msi", "msd", "mii", "mid"}
 
+func maxOf(m map[string]int) int { return slices.Max(slices.Collect(maps.Values(m))) }
+
 // Fixed terms mirror Calculate: edad 2, sexo 1, miembro inferior 1, sin antibiótico 2, tiempo 2.
+// Gustilo, Fernandez and Schatzker are mutually exclusive, so only the largest of them counts.
 var maxPuntaje = func() int {
 	m := 2 + 1 + 1 + 2 + 2
 	for _, p := range comorbilidadPuntos {
 		m += p
 	}
-	for _, t := range []map[string]int{gustiloPuntos, fernandezPuntos, quirurgicoPuntos} {
-		m += slices.Max(slices.Collect(maps.Values(t)))
-	}
-	return m
+	return m + max(maxOf(gustiloPuntos), maxOf(fernandezPuntos), maxOf(schatzkerPuntos)) + maxOf(quirurgicoPuntos)
 }()
 var nombres = map[string]string{
 	"diabetes": "diabetes mellitus", "insuficiencia_cardiaca": "insuficiencia cardiaca", "epoc": "EPOC", "demencia": "demencia",
@@ -60,6 +62,7 @@ var nombres = map[string]string{
 }
 
 func Validate(in Input) error {
+	superior := in.Localizacion == "msi" || in.Localizacion == "msd"
 	switch {
 	case in.Genero != "masculino" && in.Genero != "femenino":
 		return errors.New("genero inválido")
@@ -75,6 +78,12 @@ func Validate(in Input) error {
 		return errors.New("clasificación Gustilo requerida para fractura abierta")
 	case in.Fernandez != "" && !hasKey(fernandezPuntos, in.Fernandez):
 		return errors.New("clasificación Fernandez inválida")
+	case in.Fernandez != "" && (in.TipoFractura != "cerrada" || !superior):
+		return errors.New("Fernandez solo aplica a fractura cerrada de miembro superior")
+	case in.Schatzker != "" && !hasKey(schatzkerPuntos, in.Schatzker):
+		return errors.New("clasificación Schatzker inválida")
+	case in.Schatzker != "" && (in.TipoFractura != "cerrada" || superior):
+		return errors.New("Schatzker solo aplica a fractura cerrada de miembro inferior")
 	case in.MinutosHastaIngreso < 0:
 		return errors.New("tiempo hasta ingreso inválido")
 	case !hasKey(quirurgicoPuntos, in.ManejoQuirurgico):
@@ -123,6 +132,7 @@ func Calculate(in Input) Result {
 		}
 	}
 	add("Fernandez tipo "+in.Fernandez, fernandezPuntos[in.Fernandez])
+	add("Schatzker tipo "+in.Schatzker, schatzkerPuntos[in.Schatzker])
 	switch {
 	case in.MinutosHastaIngreso > 360:
 		add("Ingreso > 6 h tras trauma", 2)

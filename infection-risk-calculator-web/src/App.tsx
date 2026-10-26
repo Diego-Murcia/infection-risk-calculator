@@ -121,6 +121,9 @@ function ResultPanel({ result }: { result: Result }) {
 
 export default function App() {
   const [tipo, setTipo] = useState('cerrada')
+  const [localizacion, setLocalizacion] = useState('')
+  const superior = localizacion === 'msi' || localizacion === 'msd'
+  const inferior = localizacion === 'mii' || localizacion === 'mid'
   const [result, setResult] = useState<Result>()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -130,6 +133,7 @@ export default function App() {
   function reset() {
     setFormKey((k) => k + 1)
     setTipo('cerrada')
+    setLocalizacion('')
     setResult(undefined)
     setError('')
   }
@@ -145,7 +149,9 @@ export default function App() {
       segmento: f.get('segmento'),
       tipoFractura: f.get('tipoFractura'),
       gustilo: tipo === 'abierta' ? f.get('gustilo') : '',
-      fernandez: f.get('fernandez'),
+      // Hidden selects are not in the form data; the API expects "" for "no aplica".
+      fernandez: f.get('fernandez') ?? '',
+      schatzker: f.get('schatzker') ?? '',
       minutosHastaIngreso: Number(f.get('minutos')),
       antibioticoPrevio: f.get('antibiotico') === 'si',
       manejoQuirurgico: f.get('manejo'),
@@ -205,7 +211,7 @@ export default function App() {
             <h2><span className="step">2</span>Fractura</h2>
             <label className="field">
               <span className="field-label">Localización</span>
-              <select name="localizacion" required defaultValue="">
+              <select name="localizacion" required defaultValue="" onChange={(e) => setLocalizacion(e.target.value)}>
                 <option value="">Seleccione…</option>
                 <option value="msi">Miembro superior izquierdo</option>
                 <option value="msd">Miembro superior derecho</option>
@@ -231,13 +237,24 @@ export default function App() {
                   </select>
                 </label>
               )}
-              <label className="field">
-                <span className="field-label">Fernandez</span>
-                <select name="fernandez" defaultValue="">
-                  <option value="">No aplica</option>
-                  {['I', 'II', 'III', 'IV', 'V'].map((t) => <option key={t} value={t}>Tipo {t}</option>)}
-                </select>
-              </label>
+              {tipo === 'cerrada' && superior && (
+                <label className="field">
+                  <span className="field-label">Fernandez</span>
+                  <select name="fernandez" defaultValue="">
+                    <option value="">No aplica</option>
+                    {['I', 'II', 'III', 'IV', 'V'].map((t) => <option key={t} value={t}>Tipo {t}</option>)}
+                  </select>
+                </label>
+              )}
+              {tipo === 'cerrada' && inferior && (
+                <label className="field">
+                  <span className="field-label">Schatzker (platillos tibiales)</span>
+                  <select name="schatzker" defaultValue="">
+                    <option value="">No aplica</option>
+                    {['I', 'II', 'III', 'IV', 'V', 'VI'].map((t) => <option key={t} value={t}>Tipo {t}</option>)}
+                  </select>
+                </label>
+              )}
             </div>
           </section>
 
